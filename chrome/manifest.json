@@ -7,10 +7,6 @@
     "activeTab",
     "storage"
   ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "Conversation Audio Processor"
-  },
   "background": {
     "service_worker": "background.js"
   },
