@@ -1,16 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Conversation Extractor",
+  "name": "Conversation Audio Processor",
   "version": "1.0",
-  "description": "Extracts conversations from web pages into structured Markdown.",
-  "permissions": ["activeTab", "scripting"],
-  "host_permissions": ["*://*/*"],
-  "background": {
-    "service_worker": "background.js"
-  },
+  "description": "Process and analyze conversation audio",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "icon.png"
+    "default_title": "Conversation Audio Processor"
+  },
+  "background": {
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
