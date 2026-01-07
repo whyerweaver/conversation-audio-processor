@@ -1,28 +1,25 @@
 {
   "manifest_version": 3,
   "name": "Conversation Audio Processor",
-  "version": "1.0.0",
-  "description": "Process and analyze conversation audio with voice profiling",
+  "version": "1.0",
+  "description": "Process conversations with voice profiles",
   "permissions": [
     "activeTab",
     "storage"
   ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["https://gemini.google.com/*"],
       "js": [
         "core/conversationModel.js",
         "core/voiceProfiles.js",
         "chrome/extractors/gemini.js",
-        "content.js"
+        "chrome/content.js"
       ]
     }
   ],
-  "background": {
-    "service_worker": "background.js"
-  },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "chrome/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
