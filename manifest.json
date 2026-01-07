@@ -2,33 +2,20 @@
   "manifest_version": 3,
   "name": "Conversation Audio Processor",
   "version": "1.0",
-  "description": "Process conversations with voice profiles",
+  "description": "Extract conversations from LLM interfaces",
   "permissions": [
     "activeTab",
     "storage"
   ],
   "content_scripts": [
     {
-      "matches": ["https://gemini.google.com/*"],
+      "matches": ["<all_urls>"],
       "js": [
-        "core/conversationModel.js",
-        "core/voiceProfiles.js",
-        "chrome/extractors/gemini.js",
-        "chrome/content.js"
+        "conversationModel.js",
+        "voiceProfiles.js",
+        "gemini.js",
+        "content.js"
       ]
     }
-  ],
-  "action": {
-    "default_popup": "chrome/popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
-  },
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  }
+  ]
 }
