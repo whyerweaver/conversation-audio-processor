@@ -419,13 +419,6 @@ function generateJavaScript(conversation, autoPlay) {
       const exchange = conversation.exchanges[index];
       const participant = conversation.participants.find(p => p.id === exchange.participantId);
 
-      // Don't play user messages (only LLM responses)
-      if (exchange.role === 'user') {
-        console.log('[Audio] Skipping user message');
-        highlightExchange(index);
-        return;
-      }
-
       const utterance = new SpeechSynthesisUtterance(exchange.text);
 
       // Apply voice profile
@@ -477,27 +470,19 @@ function generateJavaScript(conversation, autoPlay) {
           return;
         }
 
-        const exchange = conversation.exchanges[index];
+        playExchange(index);
 
-        if (exchange.role === 'user') {
-          // Skip user messages
+        if (currentUtterance) {
+          currentUtterance.onend = () => {
+            isPlaying = false;
+            unhighlightExchange(index);
+            updatePlayButton(index, false);
+            index++;
+            setTimeout(playNext, 1000);
+          };
+        } else {
           index++;
           setTimeout(playNext, 500);
-        } else {
-          playExchange(index);
-
-          if (currentUtterance) {
-            currentUtterance.onend = () => {
-              isPlaying = false;
-              unhighlightExchange(index);
-              updatePlayButton(index, false);
-              index++;
-              setTimeout(playNext, 1000);
-            };
-          } else {
-            index++;
-            setTimeout(playNext, 500);
-          }
         }
       }
 
