@@ -617,8 +617,6 @@ if (typeof module !== 'undefined' && module.exports) {
     downloadHTML
   };
 }
-  `;
-}
 
 // Make functions available globally
 if (typeof window !== 'undefined') {
