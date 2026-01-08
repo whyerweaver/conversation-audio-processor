@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Conversation Audio Processor</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    .settings-container {
+      padding: 20px;
+      max-width: 500px;
+    }
+
+    .setting-group {
+      margin-bottom: 25px;
+    }
+
+    .setting-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .setting-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .setting-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: monospace;
+    }
+
+    .setting-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .api-key-input {
+      letter-spacing: 1px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    .status-indicator.success {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+
+    .status-indicator.error {
+      background: #fed7d7;
+      color: #742a2a;
+    }
+
+    .status-indicator.info {
+      background: #bee3f8;
+      color: #2c5282;
+    }
+
+    .link-text {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .link-text:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Settings</h1>
+      <p class="subtitle">Configure your audio generation settings</p>
+    </header>
+
+    <div class="settings-container">
+      <div class="setting-group">
+        <label class="setting-label" for="api-key">OpenAI API Key</label>
+        <p class="setting-description">
+          Your API key is stored locally in Chrome's secure storage and never shared.
+          Get your key from <a href="https://platform.openai.com/api-keys" target="_blank" class="link-text">OpenAI Platform</a>.
+        </p>
+        <input
+          type="password"
+          id="api-key"
+          class="setting-input api-key-input"
+          placeholder="sk-proj-..."
+        />
+        <div id="api-key-status"></div>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label" for="tts-model">TTS Model Quality</label>
+        <p class="setting-description">
+          tts-1: Faster, lower cost ($0.015/1K chars)<br>
+          tts-1-hd: Higher quality, higher cost ($0.030/1K chars)
+        </p>
+        <select id="tts-model" class="setting-input">
+          <option value="tts-1" selected>Standard Quality (tts-1)</option>
+          <option value="tts-1-hd">High Definition (tts-1-hd)</option>
+        </select>
+      </div>
+
+      <div class="btn-group">
+        <button id="save-btn" class="btn btn-primary">
+          <span class="btn-text">Save Settings</span>
+        </button>
+        <button id="test-btn" class="btn btn-secondary">
+          <span class="btn-text">Test API Key</span>
+        </button>
+        <button id="back-btn" class="btn btn-secondary">
+          <span class="btn-text">Back</span>
+        </button>
+      </div>
+
+      <div id="status-message" class="status-message hidden"></div>
+    </div>
+
+    <footer>
+      <p class="version">v1.0 - Multi-LLM Audio Processor</p>
+    </footer>
+  </div>
+
+  <script src="../core/audioGenerator.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
