@@ -1,12 +1,11 @@
-// content.js
-console.log('Conversation Extractor Content Script Running');
+// Content script - runs on all pages
+console. log('Conversation Extractor Content Script Running');
 
-// Run extraction when the page loads
-window.addEventListener('load', () => {
-    if (typeof extractGeminiConversation === 'function') {
-        const conversation = extractGeminiConversation();
-        console.log('Conversation extracted:', conversation);
-    } else {
-        console.log('Gemini extractor not loaded');
-    }
-});
+// Wait for page to fully load (React hydration)
+setTimeout(() => {
+  // Check if we're on a supported platform
+  if (window.location. hostname. includes('gemini.google.com')) {
+    const conversation = extractConversation();
+    console.log('Conversation extracted:', conversation);
+  }
+}, 3000);  // Wait 3 seconds for Gemini to load
