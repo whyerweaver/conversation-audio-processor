@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversation Audio Processor</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Conversation Extractor</h1>
+      <p class="subtitle">Extract & Export LLM Conversations</p>
+    </header>
+
+    <main>
+      <!-- Platform Detection -->
+      <div class="status-section">
+        <div id="platform-status" class="status-box">
+          <span class="status-label">Platform:</span>
+          <span id="platform-name" class="status-value">Detecting...</span>
+        </div>
+      </div>
+
+      <!-- Extract Button -->
+      <div class="action-section">
+        <button id="extract-btn" class="btn btn-primary" disabled>
+          <span class="btn-icon">📥</span>
+          <span class="btn-text">Extract Conversation</span>
+        </button>
+      </div>
+
+      <!-- Results Section -->
+      <div id="results-section" class="results-section hidden">
+        <div class="results-info">
+          <p class="results-title">Extraction Complete!</p>
+          <p id="exchange-count" class="results-detail">0 exchanges extracted</p>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-options">
+          <p class="export-label">Export as:</p>
+          <div class="export-buttons">
+            <button id="export-md-btn" class="btn btn-secondary">
+              <span class="btn-icon">📄</span>
+              <span class="btn-text">Markdown</span>
+            </button>
+            <button id="export-html-btn" class="btn btn-secondary">
+              <span class="btn-icon">🌐</span>
+              <span class="btn-text">HTML</span>
+            </button>
+            <button id="export-json-btn" class="btn btn-secondary">
+              <span class="btn-icon">📊</span>
+              <span class="btn-text">JSON</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Messages -->
+      <div id="status-message" class="status-message hidden"></div>
+    </main>
+
+    <footer>
+      <p class="version">v1.0 - Multi-LLM Audio Processor</p>
+    </footer>
+  </div>
+
+  <script src="../core/conversationModel.js"></script>
+  <script src="../core/voiceProfiles.js"></script>
+  <script src="../core/exporters/markdown.js"></script>
+  <script src="../core/exporters/html.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
