@@ -10,52 +10,82 @@ console.log('[Gemini Extractor] Script loaded');
  */
 function extractGeminiConversation() {
   console.log('[Gemini Extractor] Starting extraction...');
-  
+
   const conversation = createConversation('Gemini Conversation', 'gemini');
-  
+
   try {
-    // Direct approach:  find all message-content elements
-    const messages = document.querySelectorAll('message-content');
-    console.log(`[Gemini Extractor] Found ${messages. length} message elements`);
-    
-    if (messages.length === 0) {
+    // Get both user queries and assistant responses
+    const userQueries = document.querySelectorAll('user-query');
+    const assistantResponses = document.querySelectorAll('message-content');
+
+    console.log(`[Gemini Extractor] Found ${userQueries.length} user queries and ${assistantResponses.length} assistant responses`);
+
+    if (userQueries.length === 0 && assistantResponses.length === 0) {
       console.error('[Gemini Extractor] No messages found');
       return conversation;
     }
-    
-    // Extract each message
-    messages.forEach((msgElement, index) => {
-      try {
-        const text = msgElement.innerText. trim();
-        
-        if (text && text.length > 5) {
-          const role = index % 2 === 0 ? 'user' : 'assistant';
-          
-          const exchange = {
-            participantId:  role === 'user' ? 'user-me' : 'llm-gemini',
-            role: role,
-            text:  text,
-            timestamp: new Date().toISOString(),
-            metadata: {
-              platform: 'gemini',
-              extractedIndex: index
-            }
-          };
-          
-          addExchange(conversation, exchange);
-          console.log(`[Gemini Extractor] Extracted:  ${role} - ${text.substring(0, 50)}...`);
+
+    // Interleave user queries and assistant responses
+    const maxLength = Math.max(userQueries.length, assistantResponses.length);
+
+    for (let i = 0; i < maxLength; i++) {
+      // Add user query
+      if (i < userQueries.length) {
+        try {
+          const text = userQueries[i].innerText.trim();
+
+          if (text && text.length > 5) {
+            const exchange = {
+              participantId: 'user-me',
+              role: 'user',
+              text: text,
+              timestamp: new Date().toISOString(),
+              metadata: {
+                platform: 'gemini',
+                extractedIndex: i * 2
+              }
+            };
+
+            addExchange(conversation, exchange);
+            console.log(`[Gemini Extractor] Extracted user query ${i}: ${text.substring(0, 50)}...`);
+          }
+        } catch (error) {
+          console.warn(`[Gemini Extractor] Failed to extract user query ${i}:`, error);
         }
-      } catch (error) {
-        console.warn(`[Gemini Extractor] Failed to extract message ${index}:`, error);
       }
-    });
-    
+
+      // Add assistant response
+      if (i < assistantResponses.length) {
+        try {
+          const text = assistantResponses[i].innerText.trim();
+
+          if (text && text.length > 5) {
+            const exchange = {
+              participantId: 'llm-gemini',
+              role: 'assistant',
+              text: text,
+              timestamp: new Date().toISOString(),
+              metadata: {
+                platform: 'gemini',
+                extractedIndex: i * 2 + 1
+              }
+            };
+
+            addExchange(conversation, exchange);
+            console.log(`[Gemini Extractor] Extracted assistant response ${i}: ${text.substring(0, 50)}...`);
+          }
+        } catch (error) {
+          console.warn(`[Gemini Extractor] Failed to extract assistant response ${i}:`, error);
+        }
+      }
+    }
+
     console.log(`[Gemini Extractor] Complete: ${conversation.exchanges.length} exchanges`);
-    
+
   } catch (error) {
     console.error('[Gemini Extractor] Extraction failed:', error);
   }
-  
+
   return conversation;
 }
 
