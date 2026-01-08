@@ -9,8 +9,15 @@
 <body>
   <div class="container">
     <header>
-      <h1>Conversation Extractor</h1>
-      <p class="subtitle">Extract & Export LLM Conversations</p>
+      <div class="header-top">
+        <div class="header-text">
+          <h1>Conversation Extractor</h1>
+          <p class="subtitle">Extract & Export LLM Conversations</p>
+        </div>
+        <button id="settings-btn" class="btn-icon-only" title="Settings">
+          <span class="settings-icon">⚙️</span>
+        </button>
+      </div>
     </header>
 
     <main>
@@ -37,6 +44,16 @@
           <p id="exchange-count" class="results-detail">0 exchanges extracted</p>
         </div>
 
+        <!-- Audio Generation Progress -->
+        <div id="audio-progress-section" class="audio-progress-section hidden">
+          <p class="progress-label">Generating Audio...</p>
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <p id="progress-text" class="progress-text">0% complete</p>
+          <p id="progress-details" class="progress-details"></p>
+        </div>
+
         <!-- Export Options -->
         <div class="export-options">
           <p class="export-label">Export as:</p>
@@ -47,7 +64,7 @@
             </button>
             <button id="export-html-btn" class="btn btn-secondary">
               <span class="btn-icon">🌐</span>
-              <span class="btn-text">HTML</span>
+              <span class="btn-text">HTML + Audio</span>
             </button>
             <button id="export-json-btn" class="btn btn-secondary">
               <span class="btn-icon">📊</span>
@@ -68,6 +85,7 @@
 
   <script src="../core/conversationModel.js"></script>
   <script src="../core/voiceProfiles.js"></script>
+  <script src="../core/audioGenerator.js"></script>
   <script src="../core/exporters/markdown.js"></script>
   <script src="../core/exporters/html.js"></script>
   <script src="popup.js"></script>

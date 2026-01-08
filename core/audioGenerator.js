@@ -15,14 +15,15 @@ const OPENAI_TTS_CONFIG = {
 
 /**
  * Voice mapping from voiceProfiles.js to OpenAI voices
+ * OpenAI voices: alloy (neutral), echo (male), fable (male British), onyx (deep male), nova (female), shimmer (female)
  */
 const OPENAI_VOICE_MAP = {
-  'gemini': 'alloy',
-  'chatgpt': 'nova',
-  'claude': 'fable',
-  'grok': 'echo',
-  'deepseek': 'onyx',
-  'user-me': 'shimmer' // For user messages
+  'gemini': 'nova',        // Female - friendly, energetic
+  'chatgpt': 'shimmer',    // Female - warm, conversational
+  'claude': 'fable',       // Male British - thoughtful, precise
+  'grok': 'onyx',          // Deep male - witty, direct
+  'deepseek': 'alloy',     // Neutral - analytical, technical
+  'user-me': 'echo'        // Male - clear, natural (for user messages)
 };
 
 /**
@@ -93,7 +94,7 @@ async function generateAudio(text, participantId, apiKey, progressCallback = nul
 }
 
 /**
- * Generate audio for all exchanges in a conversation
+ * Generate audio for all exchanges in a conversation (PARALLEL)
  * @param {Object} conversation - Conversation object
  * @param {string} apiKey - OpenAI API key
  * @param {Function} progressCallback - Callback for progress updates
@@ -103,32 +104,15 @@ async function generateAllAudio(conversation, apiKey, progressCallback = null) {
   const exchanges = conversation.exchanges.filter(ex => ex.text && ex.text.length > 0);
   const total = exchanges.length;
   let completed = 0;
-  let totalCharacters = 0;
-  let totalCost = 0;
+  const totalCharacters = exchanges.reduce((sum, ex) => sum + ex.text.length, 0);
+  const totalCost = totalCharacters * OPENAI_TTS_CONFIG.costPerCharacter;
 
-  console.log(`[Audio Generator] Starting generation for ${total} exchanges`);
+  console.log(`[Audio Generator] Starting PARALLEL generation for ${total} exchanges`);
 
-  for (let i = 0; i < exchanges.length; i++) {
-    const exchange = exchanges[i];
+  // Create all promises in parallel
+  const promises = exchanges.map(async (exchange, i) => {
     const characters = exchange.text.length;
-    totalCharacters += characters;
-
-    // Calculate cost for this exchange
     const cost = characters * OPENAI_TTS_CONFIG.costPerCharacter;
-    totalCost += cost;
-
-    // Update progress
-    if (progressCallback) {
-      progressCallback({
-        phase: 'generating',
-        current: completed,
-        total: total,
-        currentExchange: exchange,
-        totalCharacters: totalCharacters,
-        estimatedCost: totalCost,
-        percentage: Math.round((completed / total) * 100)
-      });
-    }
 
     try {
       // Generate audio
@@ -147,12 +131,27 @@ async function generateAllAudio(conversation, apiKey, progressCallback = null) {
 
       completed++;
 
+      // Update progress
+      if (progressCallback) {
+        progressCallback({
+          phase: 'generating',
+          current: completed,
+          total: total,
+          currentExchange: exchange,
+          totalCharacters: totalCharacters,
+          estimatedCost: totalCost,
+          percentage: Math.round((completed / total) * 100)
+        });
+      }
+
       console.log(`[Audio Generator] Generated audio for exchange ${completed}/${total} (${characters} chars, $${cost.toFixed(4)})`);
+
+      return { success: true, index: i };
 
     } catch (error) {
       console.error(`[Audio Generator] Failed to generate audio for exchange ${i}:`, error);
 
-      // Mark as failed but continue
+      // Mark as failed
       exchange.audioUrl = null;
       exchange.metadata = exchange.metadata || {};
       exchange.metadata.audioError = error.message;
@@ -165,14 +164,20 @@ async function generateAllAudio(conversation, apiKey, progressCallback = null) {
           error: error.message
         });
       }
+
+      return { success: false, index: i, error: error.message };
     }
-  }
+  });
+
+  // Wait for all to complete
+  const results = await Promise.all(promises);
+  const successCount = results.filter(r => r.success).length;
 
   // Final progress update
   if (progressCallback) {
     progressCallback({
       phase: 'complete',
-      current: completed,
+      current: successCount,
       total: total,
       totalCharacters: totalCharacters,
       totalCost: totalCost,
@@ -180,7 +185,7 @@ async function generateAllAudio(conversation, apiKey, progressCallback = null) {
     });
   }
 
-  console.log(`[Audio Generator] Complete: ${completed}/${total} generated, ${totalCharacters} total characters, $${totalCost.toFixed(4)} total cost`);
+  console.log(`[Audio Generator] Complete: ${successCount}/${total} generated, ${totalCharacters} total characters, $${totalCost.toFixed(4)} total cost`);
 
   return conversation;
 }

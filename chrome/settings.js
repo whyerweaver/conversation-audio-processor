@@ -5,11 +5,15 @@
 
 const apiKeyInput = document.getElementById('api-key');
 const ttsModelSelect = document.getElementById('tts-model');
+const storageTypeSelect = document.getElementById('storage-type');
+const storageWarningEl = document.getElementById('storage-warning');
 const saveBtn = document.getElementById('save-btn');
 const testBtn = document.getElementById('test-btn');
 const backBtn = document.getElementById('back-btn');
 const statusMessageEl = document.getElementById('status-message');
 const apiKeyStatusEl = document.getElementById('api-key-status');
+
+let currentStorageType = 'local'; // Track current storage type
 
 /**
  * Initialize settings page
@@ -29,6 +33,11 @@ async function init() {
     ttsModelSelect.value = settings.ttsModel;
   }
 
+  if (settings.storageType) {
+    storageTypeSelect.value = settings.storageType;
+    currentStorageType = settings.storageType;
+  }
+
   // Set up event listeners
   saveBtn.addEventListener('click', handleSave);
   testBtn.addEventListener('click', handleTest);
@@ -37,6 +46,9 @@ async function init() {
   // Auto-save on change
   apiKeyInput.addEventListener('change', handleSave);
   ttsModelSelect.addEventListener('change', handleSave);
+
+  // Storage type change handler
+  storageTypeSelect.addEventListener('change', handleStorageTypeChange);
 }
 
 /**
@@ -44,10 +56,17 @@ async function init() {
  */
 async function loadSettings() {
   return new Promise((resolve) => {
-    chrome.storage.sync.get(['apiKey', 'ttsModel'], (result) => {
-      resolve({
-        apiKey: result.apiKey || '',
-        ttsModel: result.ttsModel || 'tts-1'
+    // First check which storage type is configured
+    chrome.storage.local.get(['storageType'], (result) => {
+      const storageType = result.storageType || 'local';
+      const storage = storageType === 'sync' ? chrome.storage.sync : chrome.storage.local;
+
+      storage.get(['apiKey', 'ttsModel', 'storageType'], (result) => {
+        resolve({
+          apiKey: result.apiKey || '',
+          ttsModel: result.ttsModel || 'tts-1',
+          storageType: result.storageType || 'local'
+        });
       });
     });
   });
@@ -58,12 +77,24 @@ async function loadSettings() {
  */
 async function saveSettings(settings) {
   return new Promise((resolve, reject) => {
-    chrome.storage.sync.set(settings, () => {
+    const storageType = settings.storageType || currentStorageType;
+    const storage = storageType === 'sync' ? chrome.storage.sync : chrome.storage.local;
+
+    // Always save storageType to local so we know where to look
+    chrome.storage.local.set({ storageType }, () => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message));
-      } else {
-        resolve();
+        return;
       }
+
+      // Save other settings to the chosen storage
+      storage.set(settings, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve();
+        }
+      });
     });
   });
 }
@@ -74,6 +105,7 @@ async function saveSettings(settings) {
 async function handleSave() {
   const apiKey = apiKeyInput.value.trim();
   const ttsModel = ttsModelSelect.value;
+  const storageType = storageTypeSelect.value;
 
   if (!apiKey) {
     showStatus('API key is required', 'error');
@@ -86,10 +118,11 @@ async function handleSave() {
   }
 
   try {
-    await saveSettings({ apiKey, ttsModel });
-    showStatus('Settings saved successfully', 'success');
+    await saveSettings({ apiKey, ttsModel, storageType });
+    currentStorageType = storageType;
+    showStatus(`Settings saved successfully (${storageType} storage)`, 'success');
     showAPIKeyStatus('saved');
-    console.log('[Settings] Saved successfully');
+    console.log(`[Settings] Saved successfully to ${storageType} storage`);
   } catch (error) {
     console.error('[Settings] Save failed:', error);
     showStatus(`Failed to save: ${error.message}`, 'error');
@@ -155,6 +188,20 @@ function showStatus(message, type = 'info') {
   setTimeout(() => {
     statusMessageEl.classList.add('hidden');
   }, 3000);
+}
+
+/**
+ * Handle storage type change
+ */
+function handleStorageTypeChange() {
+  const newStorageType = storageTypeSelect.value;
+
+  if (newStorageType !== currentStorageType && apiKeyInput.value.trim()) {
+    storageWarningEl.style.display = 'block';
+    showStatus('Storage type changed. Click Save to apply.', 'info');
+  } else {
+    storageWarningEl.style.display = 'none';
+  }
 }
 
 // Initialize when page loads

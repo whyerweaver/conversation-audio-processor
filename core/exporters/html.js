@@ -219,6 +219,25 @@ function generateCSS(theme) {
       font-size: 1.05em;
       line-height: 1.8;
       white-space: pre-wrap;
+      margin-bottom: 15px;
+    }
+
+    .audio-controls {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .audio-controls audio {
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .audio-controls audio::-webkit-media-controls-panel {
+      background: var(--bg-secondary);
+      border-radius: 8px;
     }
 
     .control-panel {
@@ -336,6 +355,7 @@ function generateExchangesHTML(conversation, showControls) {
     const participant = conversation.participants.find(p => p.id === exchange.participantId);
     const name = participant ? participant.name : 'Unknown';
     const role = exchange.role;
+    const hasAudio = !!exchange.audioUrl;
 
     return `
       <div class="exchange ${role}" data-exchange-id="${index}">
@@ -344,16 +364,16 @@ function generateExchangesHTML(conversation, showControls) {
             <span class="speaker-name">${escapeHTML(name)}</span>
             <span class="speaker-badge">${role}</span>
           </div>
-          ${showControls ? `
-          <div class="exchange-controls">
-            <button class="play-btn" data-index="${index}">
-              <span class="play-icon">▶</span>
-              <span class="play-text">Play</span>
-            </button>
-          </div>
-          ` : ''}
         </div>
         <div class="text">${escapeHTML(exchange.text)}</div>
+        ${showControls && hasAudio ? `
+        <div class="audio-controls">
+          <audio controls preload="metadata" data-exchange-index="${index}">
+            <source src="${exchange.audioUrl}" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+        ` : ''}
       </div>
     `;
   }).join('\n');
@@ -419,38 +439,77 @@ function generateJavaScript(conversation, autoPlay) {
       const exchange = conversation.exchanges[index];
       const participant = conversation.participants.find(p => p.id === exchange.participantId);
 
-      const utterance = new SpeechSynthesisUtterance(exchange.text);
+      // Check if exchange has OpenAI TTS audio
+      if (exchange.audioUrl) {
+        // Use embedded MP3 audio
+        const audio = new Audio(exchange.audioUrl);
 
-      // Apply voice profile
-      if (participant && participant.voiceProfile) {
-        const vp = participant.voiceProfile.webSpeech || participant.voiceProfile;
-        utterance.rate = vp.rate || vp.speed || 1.0;
-        utterance.pitch = vp.pitch || 1.0;
-        utterance.volume = vp.volume || 1.0;
-        utterance.voice = getVoice(exchange.participantId);
+        audio.onplay = () => {
+          isPlaying = true;
+          highlightExchange(index);
+          updatePlayButton(index, true);
+        };
+
+        audio.onended = () => {
+          isPlaying = false;
+          unhighlightExchange(index);
+          updatePlayButton(index, false);
+          currentUtterance = null;
+        };
+
+        audio.onerror = (e) => {
+          console.error('[Audio] Playback error:', e);
+          isPlaying = false;
+          unhighlightExchange(index);
+          updatePlayButton(index, false);
+          currentUtterance = null;
+        };
+
+        currentUtterance = audio;
+        audio.play();
+      } else {
+        // Fallback to Web Speech API
+        const utterance = new SpeechSynthesisUtterance(exchange.text);
+
+        // Apply voice profile
+        if (participant && participant.voiceProfile) {
+          const vp = participant.voiceProfile.webSpeech || participant.voiceProfile;
+          utterance.rate = vp.rate || vp.speed || 1.0;
+          utterance.pitch = vp.pitch || 1.0;
+          utterance.volume = vp.volume || 1.0;
+          utterance.voice = getVoice(exchange.participantId);
+        }
+
+        utterance.onstart = () => {
+          isPlaying = true;
+          highlightExchange(index);
+          updatePlayButton(index, true);
+        };
+
+        utterance.onend = () => {
+          isPlaying = false;
+          unhighlightExchange(index);
+          updatePlayButton(index, false);
+          currentUtterance = null;
+        };
+
+        currentUtterance = utterance;
+        synth.speak(utterance);
       }
-
-      utterance.onstart = () => {
-        isPlaying = true;
-        highlightExchange(index);
-        updatePlayButton(index, true);
-      };
-
-      utterance.onend = () => {
-        isPlaying = false;
-        unhighlightExchange(index);
-        updatePlayButton(index, false);
-        currentUtterance = null;
-      };
-
-      currentUtterance = utterance;
-      synth.speak(utterance);
     }
 
     // Stop playback
     function stopPlayback() {
       if (isPlaying) {
-        synth.cancel();
+        if (currentUtterance) {
+          // Check if it's an Audio object or SpeechSynthesisUtterance
+          if (currentUtterance instanceof Audio) {
+            currentUtterance.pause();
+            currentUtterance.currentTime = 0;
+          } else {
+            synth.cancel();
+          }
+        }
         if (currentIndex >= 0) {
           unhighlightExchange(currentIndex);
           updatePlayButton(currentIndex, false);
@@ -470,16 +529,32 @@ function generateJavaScript(conversation, autoPlay) {
           return;
         }
 
+        const exchange = conversation.exchanges[index];
+
+        // Play exchange
         playExchange(index);
 
+        // Set up end handler based on audio type
         if (currentUtterance) {
-          currentUtterance.onend = () => {
-            isPlaying = false;
-            unhighlightExchange(index);
-            updatePlayButton(index, false);
-            index++;
-            setTimeout(playNext, 1000);
-          };
+          if (currentUtterance instanceof Audio) {
+            // Audio object
+            currentUtterance.onended = () => {
+              isPlaying = false;
+              unhighlightExchange(index);
+              updatePlayButton(index, false);
+              index++;
+              setTimeout(playNext, 1000);
+            };
+          } else {
+            // SpeechSynthesisUtterance
+            currentUtterance.onend = () => {
+              isPlaying = false;
+              unhighlightExchange(index);
+              updatePlayButton(index, false);
+              index++;
+              setTimeout(playNext, 1000);
+            };
+          }
         } else {
           index++;
           setTimeout(playNext, 500);

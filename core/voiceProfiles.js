@@ -9,21 +9,21 @@ const LLM_VOICE_PROFILES = {
   "gemini": {
     // Web Speech API settings
     webSpeech: {
-      voice: "Google US English", // Fallback to first available if not found
+      voice: "Google US English Female", // Fallback to first available if not found
       rate: 1.0,
       pitch: 1.0,
       volume: 1.0
     },
-    // OpenAI TTS settings (for future use)
+    // OpenAI TTS settings
     openai: {
       model: "tts-1",
-      voice: "alloy", // Warm, balanced tone
+      voice: "nova", // Female - friendly, energetic
       speed: 1.0
     },
-    description: "Neutral, informative, balanced",
+    description: "Friendly, informative, energetic",
     color: "#4285F4" // Gemini blue
   },
-  
+
   "chatgpt": {
     webSpeech: {
       voice: "Google UK English Female",
@@ -33,13 +33,13 @@ const LLM_VOICE_PROFILES = {
     },
     openai: {
       model: "tts-1",
-      voice: "nova", // Friendly, approachable
+      voice: "shimmer", // Female - warm, conversational
       speed: 1.0
     },
     description: "Helpful, clear, conversational",
     color: "#10A37F" // ChatGPT green
   },
-  
+
   "claude": {
     webSpeech: {
       voice: "Google UK English Male",
@@ -49,29 +49,29 @@ const LLM_VOICE_PROFILES = {
     },
     openai: {
       model: "tts-1",
-      voice: "fable", // Expressive, articulate
+      voice: "fable", // Male British - thoughtful, precise
       speed: 0.95
     },
     description: "Thoughtful, precise, articulate",
     color: "#CC785C" // Claude orange
   },
-  
+
   "grok": {
     webSpeech: {
-      voice: "Google US English",
+      voice: "Google US English Male",
       rate: 1.1,
-      pitch: 0.9,
+      pitch: 0.85,
       volume: 1.0
     },
     openai: {
       model: "tts-1",
-      voice: "echo", // Deep, conversational
+      voice: "onyx", // Deep male - witty, direct
       speed: 1.1
     },
     description: "Witty, direct, edgy",
     color: "#000000" // X/Grok black
   },
-  
+
   "deepseek": {
     webSpeech: {
       voice: "Google US English",
@@ -81,11 +81,27 @@ const LLM_VOICE_PROFILES = {
     },
     openai: {
       model: "tts-1",
-      voice: "onyx", // Authoritative, technical
+      voice: "alloy", // Neutral - analytical, technical
       speed: 0.9
     },
     description: "Analytical, detailed, technical",
     color: "#1E3A8A" // Deep blue
+  },
+
+  "user-me": {
+    webSpeech: {
+      voice: "Google US English Male",
+      rate: 1.0,
+      pitch: 1.0,
+      volume: 1.0
+    },
+    openai: {
+      model: "tts-1",
+      voice: "echo", // Male - clear, natural
+      speed: 1.0
+    },
+    description: "User voice - clear, natural",
+    color: "#6B7280" // Gray
   }
 };
 
